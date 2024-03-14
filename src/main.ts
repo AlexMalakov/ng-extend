@@ -21,6 +21,7 @@ import {Tool, restoreTool} from 'neuroglancer/ui/tool';
 import {verifyObject, verifyObjectProperty, verifyString} from 'neuroglancer/util/json';
 import {registerAnnotateCubeTool} from "./widgets/add_cube_annotation";
 import {getLayerScales} from "./widgets/widget_utils";
+import { LightBulbService } from './widgets/lightbulb_service';
 
 declare var NEUROGLANCER_DEFAULT_STATE_FRAGMENT: string|undefined;
 
@@ -158,6 +159,8 @@ function observeSegmentSelect(targetNode: Element) {
   const viewer: ExtendViewer = (<any>window)['viewer'];
   const buttonService = viewer.buttonService;
   const annotationService = viewer.annotationService;
+  const lightbulb = viewer.lightbulb;
+
   // Select the node that will be observed for mutations
   if (!targetNode) {
     return;
@@ -227,19 +230,35 @@ function observeSegmentSelect(targetNode: Element) {
     }
   }
 
+  const placeLightbulb = function(item: HTMLElement) {
+    if (item.classList) {
+      let buttonList: Element|HTMLElement[] = [];
+      if (item.classList.contains("neuroglancer-segment-list-entry")) {
+        buttonList = [item];
+      }
+      buttonList.forEach(item => {
+        const segmentIDString =
+            item.getAttribute('data-id');
+        if (segmentIDString) {
+          let bulb = item.querySelector('.nge-lightbulb-section.menu');
+          if (bulb == null) {
+            bulb = lightbulb.createButton(segmentIDString, dataset);
+            bulb.classList.add('error')
+            item.appendChild(bulb);
+            (<HTMLButtonElement>bulb).title = 'Click for opening context menu';
+          }
+        }
+      })
+    }
+  };
+
   // Callback function to execute when mutations are observed
   const detectMutation = function(mutationsList: MutationRecord[]) {
-    //console.log('Segment ID Added');
-    // replaceIcons();
-    // TODO: this is not ideal, but it works for now  (maybe)
-    /*Array.from(document.querySelectorAll('.top-buttons .segment-checkbox'))
-        .forEach((item: any) => {
-          CustomCheck.convertCheckbox(item);
-        });
-*/
+
     mutationsList.forEach(mutation => {
       mutation.addedNodes.forEach(updateSegmentSelectItem);
-      mutation.addedNodes.forEach(updateSelectionDetailsBody)
+      mutation.addedNodes.forEach(updateSelectionDetailsBody);
+      mutation.addedNodes.forEach(placeLightbulb);
     });
   };
 
@@ -266,6 +285,8 @@ class ExtendViewer extends Viewer {
   // theme = new Theming();
   buttonService = new ButtonService();
   annotationService = new AnnotationService();
+  lightbulb = new LightBulbService();
+
   constructor(public display: DisplayContext) {
     super(display, {
       showLayerDialog: false,
@@ -275,23 +296,4 @@ class ExtendViewer extends Viewer {
       // minSidePanelSize: 310
     });
   }
-    // storeProxy.loadedViewer = true;
-    // authTokenShared!.changed.add(() => {
-    //   storeProxy.fetchLoggedInUser();
-    // });
-    // storeProxy.fetchLoggedInUser();
-
-    // if (!this.jsonStateServer.value) {
-    //   this.jsonStateServer.value = config.linkShortenerURL;
-    // }
-
-
-  // promptJsonStateServer(message: string): void {
-  //   let json_server_input = prompt(message, config.linkShortenerURL);
-  //   if (json_server_input !== null) {
-  //     this.jsonStateServer.value = json_server_input;
-  //   } else {
-  //     this.jsonStateServer.reset();
-  //   }
-  // }
 }
