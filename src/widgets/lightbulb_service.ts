@@ -3,7 +3,7 @@ import { parseSpecialUrl } from 'third_party/neuroglancer/util/special_protocol_
 // import {SubmitDialog} from './seg_management';
 
 const br = () => document.createElement('br');
-type InteracblesArray = (string|((e: MouseEvent) => void))[][];
+//type InteracblesArray = (string|((e: MouseEvent) => void))[][];
 
 export class LightBulbService {
   createButton(segmentIDString: string, dataset: string):
@@ -35,6 +35,19 @@ export class LightBulbService {
 
     // const url = "https://cave.fanc-fly.com/neurons/api/v1/datastack/brain_and_nerve_cord/proofreading_status/root_id/";
 
+
+    const viewer = (<any>window)['viewer']
+
+
+
+    const response = parseSpecialUrl(
+        'https://cave.fanc-fly.com/neurons/api/v1/datastack/brain_and_nerve_cord/proofreading_status/root_id/720575941553301220',
+        viewer.defaultCredentialsManager,
+    );
+
+    console.log("viewer:" + viewer);
+    console.log("VIEWER CRDS:" + viewer.defaultCredentialsManager);
+    console.log(response);
     
     popup_body.textContent = "HELLO WORLD AGAIN :))) \n \n \n maybe stuff will go here still super rough draft just testing the waters";
 
