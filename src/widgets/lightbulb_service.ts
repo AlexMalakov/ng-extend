@@ -1,5 +1,8 @@
 import {ContextMenu} from 'neuroglancer/ui/context_menu';
-import { parseSpecialUrl } from 'third_party/neuroglancer/util/special_protocol_request';
+import { cancellableFetchSpecialOk, parseSpecialUrl } from 'third_party/neuroglancer/util/special_protocol_request';
+import { defaultCredentialsManager } from "neuroglancer/credentials_provider/default_manager";
+import { responseJson } from "neuroglancer/util/http_request";
+
 // import {SubmitDialog} from './seg_management';
 
 const br = () => document.createElement('br');
@@ -30,27 +33,22 @@ export class LightBulbService {
     return bulb;
   };
 
-  generateSection() : HTMLDivElement{
+  generateSection(segmentIDString : string) : HTMLDivElement{
     const popup_body = document.createElement('div');
 
     // const url = "https://cave.fanc-fly.com/neurons/api/v1/datastack/brain_and_nerve_cord/proofreading_status/root_id/";
 
-
-    const viewer = (<any>window)['viewer']
-
-
-
-    const response = parseSpecialUrl(
-        'https://cave.fanc-fly.com/neurons/api/v1/datastack/brain_and_nerve_cord/proofreading_status/root_id/720575941553301220',
-        viewer.defaultCredentialsManager,
-    );
-
-    console.log("viewer:" + viewer);
-    console.log("VIEWER CRDS:" + viewer.defaultCredentialsManager);
-    console.log(response);
+    (async () => {
+        const {url: parsedUrl, credentialsProvider} = parseSpecialUrl(
+            'middleauth+https://cave.fanc-fly.com/neurons/api/v1/datastack/brain_and_nerve_cord/proofreading_status/root_id/' + segmentIDString, //720575941553301220
+            defaultCredentialsManager,
+        );  
+        await cancellableFetchSpecialOk(credentialsProvider, parsedUrl, {}, responseJson).then((res) => {
+            popup_body.textContent = "Segment information: " + JSON.stringify(res);
+        });
+    })();
     
-    popup_body.textContent = "HELLO WORLD AGAIN :))) \n \n \n maybe stuff will go here still super rough draft just testing the waters";
-
+    // popup_body.textContent = "loading";
     return popup_body;
   }
 
@@ -78,7 +76,7 @@ export class LightBulbService {
   optGroup.proofreading.push(changelog);
   menu.append(
       br(),
-      this.generateSection(),
+      this.generateSection(segmentIDString),
       br(),
       br());
   return contextMenu;
